@@ -25,7 +25,8 @@ class Stream(ndb.Expando):
 
 class Image(ndb.Model):
     image_url = ndb.StringProperty()
-    geo = ndb.GeoPtProperty()
+    latitude = ndb.DoubleProperty()
+    longitude = ndb.DoubleProperty()
     date = ndb.DateTimeProperty(auto_now_add=True)
     def to_dict(self):
         d = super(Image, self).to_dict()
@@ -115,7 +116,8 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         image = Image(parent=stream.key)
         image.image_url = serving_url
-        image.geo = GeoPt(latitude, longitude)
+        image.latitude = latitude
+        image.longitude = longitude
         if stream.cover_url == '':
             stream.cover_url = serving_url
             stream.put()
