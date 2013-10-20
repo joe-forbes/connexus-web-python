@@ -33,7 +33,7 @@ class Image(ndb.Model):
         d = super(Image, self).to_dict()
         d['id'] = self.key.id()
         return d
-
+    
 class ManPage(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/html'
@@ -97,17 +97,18 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         latitude = self.request.get('latitude')
         longitude = self.request.get('longitude')
         stream = Stream.get_by_id(long(stream_id))
-
-        geopoint = search.GeoPoint(float(latitude), float(longitude))
-        doc = search.Document(fields=[
-            search.TextField(name='id', value=str(stream.key.id())),
-            search.GeoField(name='loc', value=geopoint)])
-        search.Index(name='geopoints').put(doc)
-
         image = Image(parent=stream.key)
         image.image_url = serving_url
-        image.latitude = float(latitude)
-        image.longitude = float(longitude)
+
+        if latitude != '':
+            geopoint = search.GeoPoint(float(latitude), float(longitude))
+            doc = search.Document(fields=[
+                                          search.TextField(name='id', value=str(stream.key.id())),
+                                          search.GeoField(name='loc', value=geopoint)])
+            search.Index(name='geopoints').put(doc)
+            image.latitude = float(latitude)
+            image.longitude = float(longitude)
+
         image.stream_id = stream_id
         if stream.cover_url == '':
             stream.cover_url = serving_url
@@ -152,6 +153,15 @@ class NearbyStreams(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'application/json'
         self.response.out.write(json.dumps(streams, cls=DateSkipper))
 
+class NearbyImages(webapp2.RequestHandler):
+    def get(self):
+        latitude = self.request.get('latitude')
+        longitude = self.request.get('longitude')
+        images = Image.query().order().fetch()
+        images = [image.to_dict() for image in images if image.latitude is not None ]
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.out.write(json.dumps(images, cls=DateSkipper))
+
 class StreamImages(webapp2.RequestHandler):
     def get(self):
         stream_id = self.request.get('stream')
@@ -175,8 +185,13 @@ class AddStreamIdsToImages(webapp2.RequestHandler):
             for image in image_query.fetch():
                 image.stream_id = str(stream.key.id())
                 image.put()
-                
-                
+
+class GetStream(webapp2.RequestHandler):
+    def get(self):
+        stream_id = self.request.get('stream')
+        stream = Stream.get_by_id(long(stream_id))
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.out.write(json.dumps(stream.to_dict(), cls=DateSkipper))
             
 application = webapp2.WSGIApplication([
     ('/', ManPage),
@@ -190,4 +205,6 @@ application = webapp2.WSGIApplication([
     ('/upload', UploadImage),
     ('/upload/handler', UploadHandler),
     ('/addstreamidstoimages', AddStreamIdsToImages),
+    ('/stream', GetStream),
+    ('/nearbyimages', NearbyImages),
 ], debug=True)
