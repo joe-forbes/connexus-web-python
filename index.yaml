@@ -1,0 +1,6 @@
+indexes:
+- kind: Image
+  ancestor: yes
+  properties:
+  - name: date
+    direction: desc

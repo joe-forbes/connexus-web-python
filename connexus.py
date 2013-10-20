@@ -39,42 +39,31 @@ class ManPage(webapp2.RequestHandler):
         self.response.write('Hello, class!')
         self.response.write("""
 <p>
-I've created my own Connexus web API for the Android miniproject and I'd like to share it with the class.<br>
-<p>
-<a href="https://github.com/zachwhaley/connexus-web-python" >Git repo</a><br>
-<p>
-It's not completely functional, but here are the things that do work:<br>
-Get all streams:
-<a href="http://connexus-api.appspot.com/allstreams" >connexus-api.appspot.com/allstreams</a><br>
-<p>
-Get subscribed streams:<br>
-<a href="http://connexus-api.appspot.com/mystreams?email=zachbwhaley@gmail.com" >
-connexus-api.appspot.com/mystreams?email=zachbwhaley@gmail.com</a><br>
-<p>
-Add stream:<br>
+Based on the Zach Whaley's excellent <a href="http://connexus-api.appspot.com">connexus-api.appspot.com</a> project. Forked from there to allow Zach and his partner to move forward on the next phase of development while my partner and I finish up work on the current phase.
+</p>
+<p><a href="https://github.com/joe-forbes/connexus-web-python" >Git repo</a></p>
+<p><a href="/allstreams">Get all streams</a></p>
+<p><a href="/mystreams?email=joe.forbes@gmail.com">Get subscribed streams</a></p>
+<p>Add stream:<br>
 <code>curl --data "name=greyhounds&tags=greyhound&cover_url=http://imgur.com/IcCcXYg"
-connexus-api.appspot.com/addstream</code><br>
-Get stream images:<br>
-<a href="http://connexus-api.appspot.com/images?stream=5629499534213120" >
-connexus-api.appspot.com/images?stream=5629499534213120</a><br>
+connexus-jsf.appspot.com/addstream</code>
+</p>
+<p><a href="http://connexus-jsf.appspot.com/images?stream=5629499534213120" >Get Stream Images</a></p>
 <p>
 Subscribe to a stream:<br>
-<code>curl --data "email=zachbwhaley@gmail.com&stream=5629499534213120" connexus-api.appspot.com/subscribe</code><br>
+<code>curl --data "email=zachbwhaley@gmail.com&stream=5629499534213120" connexus-jsf.appspot.com/subscribe</code><br>
+</p>
 <p>
 Image uploading<br>
 This is a two part call<br>
-1st: get the upload URL<br>
-<a href="http://connexus-api.appspot.com/upload/geturl" >connexus-api.appspot.com/upload/geturl</a><br>
+<a href="/upload/geturl" >1st: get the upload URL</a><br>
 2nd: Send the URL with Latitude Longitude, a Stream id, and the location of your image as multipart data<br>
 <code>curl -F "latitude=30.267549" -F "longitude=-97.743645" -F "stream=5629499534213120" -F "image=@/path/to/image.jpg"
-http://connexus-api.appspot.com/url-given-from-above</code><br>
+<url-given-from-above></code><br>
+</p>
 <p>
-Nearby Streams<br>
-<a href="http://connexus-api.appspot.com/nearbystreams?latitude=30.267549&longitude=-97.743645" >
-connexus-api.appspot.com/nearbystreams?latitude=30.267549&longitude=-97.743645</a><br>
-<p>
-Feel free to use these in your Android app :-)<br>
-Let me know if I'm missing anything, and please feel free to contribute.<br>
+<a href="/nearbystreams?latitude=30.267549&longitude=-97.743645" >Nearby streams</a><br>
+</p>
 """)
 
 class AddStream(webapp2.RequestHandler):
@@ -165,7 +154,7 @@ class StreamImages(webapp2.RequestHandler):
     def get(self):
         stream_id = self.request.get('stream')
         stream = Stream.get_by_id(long(stream_id))
-        query = Image.query(ancestor=stream.key)
+        query = Image.query(ancestor=stream.key).order(-Image.date)
         images = [image.to_dict() for image in query.fetch()]
         self.response.headers['Content-Type'] = 'application/json'
         self.response.out.write(json.dumps(images, cls=DateSkipper))
