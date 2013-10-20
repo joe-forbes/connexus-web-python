@@ -28,6 +28,7 @@ class Image(ndb.Model):
     latitude = ndb.FloatProperty()
     longitude = ndb.FloatProperty()
     date = ndb.DateTimeProperty(auto_now_add=True)
+    stream_id = ndb.StringProperty()
     def to_dict(self):
         d = super(Image, self).to_dict()
         d['id'] = self.key.id()
@@ -107,6 +108,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         image.image_url = serving_url
         image.latitude = float(latitude)
         image.longitude = float(longitude)
+        image.stream_id = stream_id
         if stream.cover_url == '':
             stream.cover_url = serving_url
             stream.put()
@@ -165,6 +167,17 @@ class DateSkipper(json.JSONEncoder):
             return
         return json.JSONEncoder.default(self, obj) 
 
+class AddStreamIdsToImages(webapp2.RequestHandler):
+    def get(self):
+        stream_query = Stream.query()
+        for stream in stream_query.fetch():
+            image_query = Image.query(ancestor=stream.key)
+            for image in image_query.fetch():
+                image.stream_id = str(stream.key.id())
+                image.put()
+                
+                
+            
 application = webapp2.WSGIApplication([
     ('/', ManPage),
     ('/addstream', AddStream),
@@ -176,4 +189,5 @@ application = webapp2.WSGIApplication([
     ('/upload/geturl', GetUploadUrl),
     ('/upload', UploadImage),
     ('/upload/handler', UploadHandler),
+    ('/addstreamidstoimages', AddStreamIdsToImages),
 ], debug=True)

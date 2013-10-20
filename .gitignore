@@ -33,3 +33,10 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+/deploy.sh
+/deploy.sh~
+/addPicturesToStream.sh
+/addPicturesToStream.sh~
+/createStream.sh
+/createStream.sh~
+/index.yaml~
