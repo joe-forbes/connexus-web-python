@@ -116,6 +116,8 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             stream.cover_url = serving_url
             stream.put()
         image.put()
+        stream.date = datetime.datetime.now()
+        stream.put()
         self.response.headers['Content-Type'] = 'application/json'
         self.response.out.write(json.dumps(image.to_dict(), cls=DateSkipper))
 
