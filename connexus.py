@@ -29,6 +29,7 @@ class Image(ndb.Model):
     longitude = ndb.FloatProperty()
     date = ndb.DateTimeProperty(auto_now_add=True)
     stream_id = ndb.StringProperty()
+    tags = ndb.StringProperty()
     def to_dict(self):
         d = super(Image, self).to_dict()
         d['id'] = self.key.id()
@@ -99,7 +100,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         stream = Stream.get_by_id(long(stream_id))
         image = Image(parent=stream.key)
         image.image_url = serving_url
-
+        tags = self.request.get('tags')
         if latitude != '':
             geopoint = search.GeoPoint(float(latitude), float(longitude))
             doc = search.Document(fields=[
@@ -110,6 +111,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             image.longitude = float(longitude)
 
         image.stream_id = stream_id
+        image.tags = tags
         if stream.cover_url == '':
             stream.cover_url = serving_url
             stream.put()
